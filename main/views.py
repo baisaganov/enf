@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.template.response import TemplateResponse
 
 from common.views import CommonTemplateMixin
-from models import Product, Category, Size
+from .models import Product, Category, Size
 from django.db.models import Q
 
 
@@ -101,7 +101,7 @@ class ProductDetailView(CommonTemplateMixin, DetailView):
         self.object = self.get_object()
         context = self.get_context_data(**kwargs)
         if request.headers.get('HX-Request'):
-            return TemplateResponse(request, 'main/product_detai.html', context)
+            return TemplateResponse(request, 'main/product_detail.html', context)
         return TemplateResponse(request, self.template_name, context)
 
 
