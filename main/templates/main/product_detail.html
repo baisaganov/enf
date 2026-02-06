@@ -1,18 +1,16 @@
-{% block content %}
-
 <main class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Breadcrumb -->
     <div class="mb-8">
         <nav class="text-sm text-gray-600">
-            <a href="{% url 'main:index' %}"
-               hx-get="{% url 'main:index' %}"
-               hx-target="#main-content"
+            <a href="{% url 'main:index' %}" 
+               hx-get="{% url 'main:index' %}" 
+               hx-target="#main-content" 
                hx-push-url="true"
                class="hover:text-gray-900">HOME</a>
             <span class="mx-2">/</span>
-            <a href="{% url 'main:catalog' product.category.slug %}"
-               hx-get="{% url 'main:catalog' product.category.slug %}"
-               hx-target="#main-content"
+            <a href="{% url 'main:catalog' product.category.slug %}" 
+               hx-get="{% url 'main:catalog' product.category.slug %}" 
+               hx-target="#main-content" 
                hx-push-url="true"
                class="hover:text-gray-900">{{ product.category.name|upper }}</a>
             <span class="mx-2">/</span>
@@ -26,8 +24,8 @@
             <!-- Main Image -->
             <div class="aspect-square overflow-hidden bg-gray-100">
                 {% if product.main_image %}
-                    <img src="{{ product.main_image.url }}"
-                         alt="{{ product.name }}"
+                    <img src="{{ product.main_image.url }}" 
+                         alt="{{ product.name }}" 
                          class="w-full h-full object-cover">
                 {% else %}
                     <div class="w-full h-full bg-gray-200 flex items-center justify-center">
@@ -41,8 +39,8 @@
             <div class="grid grid-cols-3 gap-2">
                 {% for image in product.images.all %}
                 <div class="aspect-square overflow-hidden bg-gray-100 cursor-pointer hover:opacity-80">
-                    <img src="{{ image.image.url }}"
-                         alt="{{ product.name }}"
+                    <img src="{{ image.image.url }}" 
+                         alt="{{ product.name }}" 
                          class="w-full h-full object-cover"
                          onclick="changeMainImage(this.src)">
                 </div>
@@ -68,8 +66,8 @@
                 <div class="grid grid-cols-4 gap-2">
                     {% for product_size in product.product_size.all %}
                     <div class="size-option">
-                        <input type="radio"
-                               name="size"
+                        <input type="radio" 
+                               name="size" 
                                class="size-radio hidden"
                                id="size-{{ product_size.id }}"
                                value="{{ product_size.id }}"
@@ -93,13 +91,13 @@
 
             <!-- Add to Cart -->
             <div class="space-y-4">
-                <button id="add-to-cart-btn"
+                <button id="add-to-cart-btn" 
                         class="w-full bg-black text-white py-3 px-6 text-sm font-medium hover:bg-gray-800 transition-colors"
                         onclick="addToCart()"
                         {% if not product.product_size.all %}disabled{% endif %}>
                     ADD TO CART
                 </button>
-
+                
                 <button class="w-full border border-gray-300 py-3 px-6 text-sm font-medium hover:border-gray-900 transition-colors">
                     ADD TO WISHLIST
                 </button>
@@ -132,14 +130,14 @@
         <h2 class="text-xl font-bold tracking-tight text-gray-900 mb-8">YOU MAY ALSO LIKE</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {% for related_product in related_products %}
-            <div class="product-card group cursor-pointer"
+            <div class="product-card group cursor-pointer" 
                  hx-get="{% url 'main:product_detail' related_product.slug %}"
                  hx-target="#main-content"
                  hx-push-url="true">
                 <div class="aspect-square overflow-hidden bg-gray-100 mb-4">
                     {% if related_product.main_image %}
-                        <img src="{{ related_product.main_image.url }}"
-                             alt="{{ related_product.name }}"
+                        <img src="{{ related_product.main_image.url }}" 
+                             alt="{{ related_product.name }}" 
                              class="product-image w-full h-full object-cover">
                     {% else %}
                         <div class="product-image w-full h-full bg-gray-200 flex items-center justify-center">
@@ -196,6 +194,52 @@
         }
     }
 
+    function addToCart() {
+        const productSlug = '{{ product.slug }}';
+        console.log('Product Slug:', productSlug);
+        
+        // Update selected size before sending
+        updateSelectedSize();
+        console.log('Selected Size ID:', selectedSizeId);
+
+        if (!selectedSizeId) {
+            showNotification('Please select a size');
+            return;
+        }
+
+        let formData = new FormData();
+        formData.append('size_id', selectedSizeId);
+        formData.append('quantity', '1');
+        fetch(`{% url 'cart:add_to_cart' 'PLACEHOLDER' %}`.replace('PLACEHOLDER', productSlug), {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => {
+            console.log('Response Status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response Data:', data);
+            if (data.error) {
+                showNotification(data.error);
+            } else {
+                updateHeaderCartCount(data.total_items);
+                showNotification(data.message);
+                htmx.ajax('GET', '{% url "cart:cart_modal" %}', {
+                    target: '#cart-container',
+                    swap: 'innerHTML'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error adding to cart');
+        });
+    }
+    
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -210,7 +254,7 @@
         }
         return cookieValue;
     }
-
+    
     function showNotification(message) {
         const notification = document.createElement('div');
         notification.className = 'fixed top-20 right-4 bg-black text-white px-6 py-3 rounded shadow-lg z-50 transform translate-x-full transition-transform duration-300';
@@ -291,4 +335,3 @@
         });
     });
 </script>
-{% endblock content %}

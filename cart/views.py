@@ -28,6 +28,7 @@ class CartMixin:
         request.session.modified = True
         return Cart
 
+
 class CartModalView(CartMixin, View):
     def get(self, request):
         cart = self.get_cart(request)
@@ -39,6 +40,7 @@ class CartModalView(CartMixin, View):
             ).order_by('-added_at')
         }
         return TemplateResponse(request, 'cart/cart_modal.html', context)
+
 
 class AddToCartView(CartMixin, View):
     @transaction.atomic
